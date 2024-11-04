@@ -1,5 +1,7 @@
 package com.pt.interviewms.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pt.interviewms.dto.*;
 import com.pt.interviewms.dto.InterviewRecordsDTO;
 import com.pt.interviewms.models.entity.Answer;
@@ -12,12 +14,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class InterviewServiceImpl implements InterviewService {
@@ -32,6 +38,12 @@ public class InterviewServiceImpl implements InterviewService {
     @Autowired
     private AnswerRepository answerRepository;
 
+    @Autowired
+    private KafkaTemplate<Integer, String> kafkaTemplate;
+
+    private ObjectMapper mapper = new ObjectMapper();
+
+    //obtiene aleatoriamente de BD las preguntas y genera una entrevista
     @Override
     public InterviewJoinQuestionsDTO generaInterview(Long userId) {
         InterviewRecord interviewRecord = new InterviewRecord(new Date(),userId);
@@ -49,34 +61,7 @@ public class InterviewServiceImpl implements InterviewService {
         return ijqDTO;
     }
 
-    @Override
-    public InterviewJoinQuestionsDTO filtrarQuestions(Long userId, Long interviewId) { //obtener las preguntas de una determinada entrevista
-        InterviewRecord interviewRecord =interviewRecordRepository.findByInterviewIdAndUserId(userId, interviewId).
-                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        InterviewJoinQuestionsDTO ijqDTO = new InterviewJoinQuestionsDTO();
-        List<Question> questions = questionRepository.findAllByInterviewId(interviewId).
-                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        ijqDTO.setInterviewId(interviewRecord.getInterviewId());
-        ijqDTO.setQuestionDTOs(getQuestionsDTOS(questions));
-        return ijqDTO;
-    }
-
-    //obtener una entrevista ya realizada (question <questionId, bodyQuestion>, answer <answerId, answer, score>)
-    @Override
-    public InterviewJoinResultsDTO filtrarInterview(Long userId, Long interviewId) {
-        InterviewRecord interviewRecord =interviewRecordRepository.findByInterviewIdAndUserId(interviewId, userId).
-                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        logger.info("interviewId" + interviewRecord.getInterviewId().toString());
-        List<Question> questions = questionRepository.findAllByInterviewId(interviewRecord.getInterviewId()).
-                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        questions.stream().forEach(e-> logger.info("questionId" + e.getQuestionId().toString()));
-        InterviewJoinResultsDTO ijrDTO = new InterviewJoinResultsDTO();
-        ijrDTO.setInterviewId(interviewRecord.getInterviewId());
-        logger.info("dto " + ijrDTO.getInterviewId());
-        ijrDTO.setResultDTOs(getResultsDTOS(questions));
-        return ijrDTO;
-    }
-
+    //filtra los overview de todas las entrevistas realizadas
     @Override
     public InterviewRecordsDTO filtrarOverviews(Long userId) {
         List<InterviewRecord> interviewRecords =interviewRecordRepository.findAllByUserId(userId).
@@ -94,44 +79,97 @@ public class InterviewServiceImpl implements InterviewService {
         return interviewRecordsDTO;
     }
 
+    //obtener una entrevista ya realizada (interviewId, question <bodyQuestion>, answer <answerUser, score>)
     @Override
-    public QuestionJoinAnswerOutputsDTO setAnswersScore(QuestionJoinAnswerInputsDTO qJaIsDTOs, Long userId, Long interviewId) {
-        //qJaIsDTOs.getqJaIsDTOs().stream().forEach(e-> logger.info("elemento: " + e));
-        QuestionJoinAnswerOutputsDTO qJaOsDTO = new QuestionJoinAnswerOutputsDTO();
-        String score = "CORRECTO";
-        int promedio = 0;
-        for(QuestionJoinAnswerInputDTO qJaI_ODT:qJaIsDTOs.getqJaIsDTOs()){
-            //logger.info("questionId " + qJaI_ODT.getQuestionId().toString());
-            if(score.equals("CORRECTO")) promedio++;
-            Answer answer = new Answer(qJaI_ODT.getAnswerUser(),score);
+    public InterviewJoinResultsDTO filtrarInterview(Long userId, Long interviewId) {
+        InterviewRecord interviewRecord =interviewRecordRepository.findByInterviewIdAndUserId(interviewId, userId).
+                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        logger.info("interviewId" + interviewRecord.getInterviewId().toString());
+        List<Question> questions = questionRepository.findAllByInterviewId(interviewRecord.getInterviewId()).
+                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        questions.stream().forEach(e-> logger.info("questionId" + e.getQuestionId().toString()));
+        InterviewJoinResultsDTO ijrDTO = new InterviewJoinResultsDTO();
+        ijrDTO.setInterviewId(interviewRecord.getInterviewId());
+        logger.info("dto " + ijrDTO.getInterviewId());
+        ijrDTO.setResultDTOs(getResultsDTOS(questions));
+        return ijrDTO;
+    }
+
+    //setea las preguntas que el usuario proporciona
+    @Override
+    public void setUserAnswers(QuestionJoinAnswerInputsDTO questionJoinAnswerInputsDTO) {
+        for(QuestionJoinAnswerInputDTO qJaI:questionJoinAnswerInputsDTO.getqJaIsDTOs()){
+            Answer answer = new Answer(qJaI.getAnswerUser());
             Answer answerDB = answerRepository.save(answer);
-            //logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore());
-            Question question = questionRepository.findById(qJaI_ODT.getQuestionId()).
+            Question question = questionRepository.findByQuestionId(qJaI.getQuestionId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             question.setAnswerId(answerDB.getAnswerId());
             Question questionDB = questionRepository.save(question);
-            //logger.info("question-answerId " + questionDB.getAnswerId());
-            qJaOsDTO.getqJaOsDTOSs().add(new QuestionJoinAnswerOutputDTO(questionDB.getQuestionId(),questionDB.getAnswerId(),answerDB.getScore()));
         }
-        qJaOsDTO.setInterviewScore((promedio * 100L) /2);
-        InterviewRecord interviewRecord = interviewRecordRepository.findById(interviewId).
-                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        interviewRecord.setScore(qJaOsDTO.getInterviewScore());
-        InterviewRecord interviewRecordDB = interviewRecordRepository.save(interviewRecord);
-        //qJaOsDTO.getqJaOsDTOSs().stream().forEach(e-> logger.info("elemento: " + e));
-        return qJaOsDTO;
+        try {
+            kafkaTemplate.send("answersPublishJSON",mapper.writeValueAsString(questionJoinAnswerInputsDTO));
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Error al parsear los campos del CV");
+        }
     }
 
+//INTERACCIÓN CON LLM
+    //setea las preguntas generadas a un determinada usuario
+    @KafkaListener(topics = "questionsPublishJSON", groupId = "interviewMS")
     @Override
-    public void setUserQuestions(List<QuestionDTO> questionsDTOs, Long userId) {
-        logger.info("public void setUserQuestions starts");
-        for(QuestionDTO questionDTO: questionsDTOs){
-            Question question = new Question(questionDTO.getBodyQuestion(),userId);
+    public void setUserQuestions(String llmResponse) {
+        logger.info(llmResponse);
+        List<String> elements = new ArrayList<>(Arrays.stream(llmResponse.split("\\|\\|")).toList());
+        String userId = elements.get(0);
+        elements.remove(0);
+        for(String element: elements){
+            Question question = new Question(element, Long.valueOf(userId));
             Question questionDB = questionRepository.save(question);
             logger.info("bodyQuestion "+questionDB.getBodyQuestion() + "    userId " + questionDB.getUserId());
         }
         logger.info("public void setUserQuestions finished");
     }
+
+    //setea el score de cada pregunta de una determinada entrevista
+    @KafkaListener(topics = "answersPublishJSON", groupId = "interviewMS")
+    @Override
+    public void setAnswersScore(String llmResponse) {
+        logger.info(llmResponse);
+        List<String> elements = new ArrayList<>(Arrays.stream(llmResponse.split("\\|\\|")).toList());
+        String userId = elements.get(0);
+        elements.remove(0);
+        String interviewId = elements.get(0);
+        elements.remove(0);
+        int promedio = 0;
+        for(String element:elements){
+            List<String> items_score = new ArrayList<>(Arrays.stream(element.split(" ")).toList());
+            Long answerId = questionRepository.selectAnswerId(Long.valueOf(items_score.get(0))).
+                    orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            Answer answer = answerRepository.findByAnswerId(answerId).
+                    orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            answer.setScore(items_score.get(1));
+            Answer answerDB = answerRepository.save(answer);
+            if(items_score.get(1).equals("CORRECTO")) promedio++;
+            logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore());
+        }
+        InterviewRecord interviewRecord = interviewRecordRepository.findById(Long.valueOf(interviewId)).
+                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        interviewRecord.setScore((promedio * 100L) /2);
+        InterviewRecord interviewRecordDB = interviewRecordRepository.save(interviewRecord);
+
+    }
+
+    /*@Override
+    public InterviewJoinQuestionsDTO filtrarQuestions(Long userId, Long interviewId) { //obtener las preguntas de una determinada entrevista
+        InterviewRecord interviewRecord =interviewRecordRepository.findByInterviewIdAndUserId(userId, interviewId).
+                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        InterviewJoinQuestionsDTO ijqDTO = new InterviewJoinQuestionsDTO();
+        List<Question> questions = questionRepository.findAllByInterviewId(interviewId).
+                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ijqDTO.setInterviewId(interviewRecord.getInterviewId());
+        ijqDTO.setQuestionDTOs(getQuestionsDTOS(questions));
+        return ijqDTO;
+    }*/
 
     public List<QuestionDTO> getQuestionsDTOS(List<Question> questions){
         List<QuestionDTO> questionsDTOs = new ArrayList<>();

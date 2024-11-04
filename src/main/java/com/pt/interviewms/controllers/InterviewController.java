@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -73,12 +74,13 @@ public class InterviewController {
         }
     }
 
-    @PostMapping("/setAnswersScore/{user_id}/{interview_id}") //setea el score a cada pregunta contestada en una determinada entrevista por un determinado usuario
-    public ResponseEntity<GenericResponseDTO<QuestionJoinAnswerOutputsDTO>> setAnswersScore(@Valid @RequestBody QuestionJoinAnswerInputsDTO qJaOsDTOs, @PathVariable Long user_id,@PathVariable  Long interview_id){
+    @PostMapping("/setUserAnswers") //setea las respuestas del usuario sobre una determinada entrevista
+    public ResponseEntity<GenericResponseDTO> setUserAnswers(@Valid @RequestBody QuestionJoinAnswerInputsDTO qJaOsDTOs){
         try{
-            logger.info("Execute setAnswersScore() " );
+            logger.info("Execute setUserAnswers() " );
+            interviewService.setUserAnswers(qJaOsDTOs);
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
-                   CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.setAnswersScore(qJaOsDTOs,user_id,interview_id)));
+                   CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,null));
         }catch(ResponseStatusException ex){
             logger.error("Exception: " + ex.getMessage());
             return new ResponseEntity<>(new GenericResponseDTO<>(
@@ -90,22 +92,5 @@ public class InterviewController {
         }
     }
 
-    @PostMapping("/setUserQuestions/{user_id}") //setea las preguntas generadas por el LLM a un determinado usuario
-    public ResponseEntity<GenericResponseDTO> setUserQuestions(@Valid @RequestBody List<QuestionDTO> questionsDTOs, @PathVariable  Long user_id){
-        try{
-            logger.info("Execute setUserQuestions() " + user_id);
-            interviewService.setUserQuestions(questionsDTOs,user_id);
-            logger.info("Execute setUserQuestions() DONE");
-            return ResponseEntity.ok().body(new GenericResponseDTO<>(
-                    CommonController.SUCCESS, HttpStatus.OK.value(), null, null, "preguntas al usuario asignadas correctamente",null));
-        }catch(ResponseStatusException ex){
-            logger.error("Exception: " + ex.getMessage());
-            return new ResponseEntity<>(new GenericResponseDTO<>(
-                    CommonController.ERROR, HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.toString(), ex.getMessage(), "service execute", null), HttpStatus.NOT_FOUND);
-        }catch(Exception ex){
-            logger.error("Exception: " + ex.getMessage());
-            return new ResponseEntity<>(new GenericResponseDTO<>(
-                    CommonController.ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.toString(), ex.getMessage(), "service execute", null), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+
 }

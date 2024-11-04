@@ -11,6 +11,12 @@ public class InterviewRecordDTO {
     public InterviewRecordDTO() {
     }
 
+    public InterviewRecordDTO(Long interviewId, Date dateTime, Long score) {
+        this.interviewId = interviewId;
+        this.dateTime = dateTime;
+        this.score = score;
+    }
+
     public Long getInterviewId() {
         return interviewId;
     }
