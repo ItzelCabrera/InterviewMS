@@ -95,6 +95,7 @@ public class InterviewServiceImpl implements InterviewService {
         return ijrDTO;
     }
 
+//INTERACCIÓN CON LLM
     //setea las preguntas que el usuario proporciona
     @Override
     public void setUserAnswers(QuestionJoinAnswerInputsDTO questionJoinAnswerInputsDTO) {
@@ -107,13 +108,12 @@ public class InterviewServiceImpl implements InterviewService {
             Question questionDB = questionRepository.save(question);
         }
         try {
-            kafkaTemplate.send("answersPublishJSON",mapper.writeValueAsString(questionJoinAnswerInputsDTO));
+            kafkaTemplate.send("userAnswersPublishJSON",mapper.writeValueAsString(questionJoinAnswerInputsDTO));
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Error al parsear los campos del CV");
         }
     }
 
-//INTERACCIÓN CON LLM
     //setea las preguntas generadas a un determinada usuario
     @KafkaListener(topics = "questionsPublishJSON", groupId = "interviewMS")
     @Override
@@ -131,7 +131,7 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     //setea el score de cada pregunta de una determinada entrevista
-    @KafkaListener(topics = "answersPublishJSON", groupId = "interviewMS")
+    @KafkaListener(topics = "answersScoresPublishJSON", groupId = "interviewMS")
     @Override
     public void setAnswersScore(String llmResponse) {
         logger.info(llmResponse);
