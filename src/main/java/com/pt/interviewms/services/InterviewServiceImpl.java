@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class InterviewServiceImpl implements InterviewService {
@@ -96,6 +95,25 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
 //INTERACCIÓN CON LLM
+    //setea las preguntas generadas a un determinada usuario
+    @KafkaListener(topics = "questionsPublishJSON", groupId = "interviewMS")
+    @Override
+    public void setUserQuestions(String llmResponse) {
+        logger.info(llmResponse);
+        try {
+            CvJoinQuestionsDTO cvJoinFieldDTO = mapper.readValue(llmResponse, CvJoinQuestionsDTO.class);
+            List<String> elements = new ArrayList<>(Arrays.stream(cvJoinFieldDTO.getQuestions().split("\\|")).toList());
+            for(String element: elements){
+                Question question = new Question(element.trim(), cvJoinFieldDTO.getCvId());
+                Question questionDB = questionRepository.save(question);
+                logger.info("bodyQuestion "+questionDB.getBodyQuestion() + "    userId " + questionDB.getUserId());
+            }
+            logger.info("public void setUserQuestions finished");
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Error al parsear la publicacion de LLM-Service");
+        }
+    }
+
     //setea las preguntas que el usuario proporciona
     @Override
     public void setUserAnswers(QuestionJoinAnswerInputsDTO questionJoinAnswerInputsDTO) {
@@ -114,49 +132,35 @@ public class InterviewServiceImpl implements InterviewService {
         }
     }
 
-    //setea las preguntas generadas a un determinada usuario
-    @KafkaListener(topics = "questionsPublishJSON", groupId = "interviewMS")
-    @Override
-    public void setUserQuestions(String llmResponse) {
-        logger.info(llmResponse);
-        List<String> elements = new ArrayList<>(Arrays.stream(llmResponse.split("\\|\\|")).toList());
-        String userId = elements.get(0);
-        elements.remove(0);
-        for(String element: elements){
-            Question question = new Question(element, Long.valueOf(userId));
-            Question questionDB = questionRepository.save(question);
-            logger.info("bodyQuestion "+questionDB.getBodyQuestion() + "    userId " + questionDB.getUserId());
-        }
-        logger.info("public void setUserQuestions finished");
-    }
-
     //setea el score de cada pregunta de una determinada entrevista
     @KafkaListener(topics = "answersScoresPublishJSON", groupId = "interviewMS")
     @Override
     public void setAnswersScore(String llmResponse) {
         logger.info(llmResponse);
-        List<String> elements = new ArrayList<>(Arrays.stream(llmResponse.split("\\|\\|")).toList());
-        String userId = elements.get(0);
-        elements.remove(0);
-        String interviewId = elements.get(0);
-        elements.remove(0);
-        int promedio = 0;
-        for(String element:elements){
-            List<String> items_score = new ArrayList<>(Arrays.stream(element.split(" ")).toList());
-            Long answerId = questionRepository.selectAnswerId(Long.valueOf(items_score.get(0))).
+        try {
+            logger.info("setAnswersScore");
+            InterviewJoinScoresDTO interviewJoinScoresDTO = mapper.readValue(llmResponse, InterviewJoinScoresDTO.class);
+            logger.info(interviewJoinScoresDTO.getScores());
+            List<String> elements = new ArrayList<>(Arrays.stream(interviewJoinScoresDTO.getScores().split("\\|")).toList());
+            int promedio = 0;
+            for(String element: elements){
+                List<String> items_score = new ArrayList<>(Arrays.stream(element.split(" ")).toList());
+                Long answerId = questionRepository.selectAnswerIdByQuestionId(Long.valueOf(items_score.get(0).trim())).
+                        orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                Answer answer = answerRepository.findByAnswerId(answerId).
+                        orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                answer.setScore(items_score.get(1).trim());
+                Answer answerDB = answerRepository.save(answer);
+                if(items_score.get(1).trim().equals("CORRECTO")) promedio++;
+                logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore());
+            }
+            InterviewRecord interviewRecord = interviewRecordRepository.findById(interviewJoinScoresDTO.getInterviewId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-            Answer answer = answerRepository.findByAnswerId(answerId).
-                    orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-            answer.setScore(items_score.get(1));
-            Answer answerDB = answerRepository.save(answer);
-            if(items_score.get(1).equals("CORRECTO")) promedio++;
-            logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore());
+            interviewRecord.setScore((promedio * 100L) /2);
+            InterviewRecord interviewRecordDB = interviewRecordRepository.save(interviewRecord);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Error al parsear la publicacion de LLM-Service");
         }
-        InterviewRecord interviewRecord = interviewRecordRepository.findById(Long.valueOf(interviewId)).
-                orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        interviewRecord.setScore((promedio * 100L) /2);
-        InterviewRecord interviewRecordDB = interviewRecordRepository.save(interviewRecord);
-
     }
 
     /*@Override

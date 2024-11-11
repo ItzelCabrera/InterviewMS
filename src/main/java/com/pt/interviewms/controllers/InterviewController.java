@@ -27,6 +27,7 @@ public class InterviewController {
     public ResponseEntity<GenericResponseDTO<InterviewJoinQuestionsDTO>> generateInterview(@PathVariable Long userId){
         try{
             logger.info("Execute generateInterview() " );
+            logger.info(String.format("userId %d", userId));
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.generaInterview(userId)));
         }catch(ResponseStatusException ex){
@@ -44,6 +45,7 @@ public class InterviewController {
     public ResponseEntity<GenericResponseDTO<InterviewRecordsDTO>> getInterviews(@PathVariable Long user_id){
         try{
             logger.info("Execute getInterviews() " );
+            logger.info(String.format("userId %d", user_id));
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.filtrarOverviews(user_id)));
         }catch(ResponseStatusException ex){
@@ -61,6 +63,7 @@ public class InterviewController {
     public ResponseEntity<GenericResponseDTO<InterviewJoinResultsDTO>> getInterview(@PathVariable Long user_id, @PathVariable Long interview_id){
         try{
             logger.info("Execute getInterview() " );
+            logger.info(String.format("userId %d, interviewId %d", user_id, interview_id));
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.filtrarInterview(user_id,interview_id)));
         }catch(ResponseStatusException ex){
@@ -78,6 +81,8 @@ public class InterviewController {
     public ResponseEntity<GenericResponseDTO> setUserAnswers(@Valid @RequestBody QuestionJoinAnswerInputsDTO qJaOsDTOs){
         try{
             logger.info("Execute setUserAnswers() " );
+            logger.info(String.format("userId %d interviewId %d", qJaOsDTOs.getUserId(), qJaOsDTOs.getInterviewId()));
+            qJaOsDTOs.getqJaIsDTOs().stream().forEach(qJai -> logger.info(String.format("questionId %d bodyQuestion %s answerUser %s", qJai.getQuestionId(), qJai.getBodyQuestion(), qJai.getAnswerUser())));
             interviewService.setUserAnswers(qJaOsDTOs);
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                    CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,null));

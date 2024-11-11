@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuestionJoinAnswerInputsDTO {
+    private Long userId;
+    private Long interviewId;
     private List<QuestionJoinAnswerInputDTO> qJaIsDTOs;
 
     public QuestionJoinAnswerInputsDTO() {
@@ -16,5 +18,21 @@ public class QuestionJoinAnswerInputsDTO {
 
     public void setqJaIsDTOs(List<QuestionJoinAnswerInputDTO> qJaIsDTOs) {
         this.qJaIsDTOs = qJaIsDTOs;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getInterviewId() {
+        return interviewId;
+    }
+
+    public void setInterviewId(Long interviewId) {
+        this.interviewId = interviewId;
     }
 }
