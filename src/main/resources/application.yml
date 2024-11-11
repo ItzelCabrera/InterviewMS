@@ -17,3 +17,13 @@ logging:
     com.zaxxer.hikari: DEBUG
 server:
   port: 8084
+eureka:
+  instance:
+    ip-address: 158.23.81.1
+    instance-id: ${spring.application.name}:${random.value}
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://158.23.81.1:8761/eureka
