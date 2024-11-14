@@ -104,7 +104,7 @@ public class InterviewServiceImpl implements InterviewService {
             CvJoinQuestionsDTO cvJoinFieldDTO = mapper.readValue(llmResponse, CvJoinQuestionsDTO.class);
             List<String> elements = new ArrayList<>(Arrays.stream(cvJoinFieldDTO.getQuestions().split("\\|")).toList());
             for(String element: elements){
-                Question question = new Question(element.trim(), cvJoinFieldDTO.getCvId());
+                Question question = new Question(element.trim(), cvJoinFieldDTO.getUserId());
                 Question questionDB = questionRepository.save(question);
                 logger.info("bodyQuestion "+questionDB.getBodyQuestion() + "    userId " + questionDB.getUserId());
             }

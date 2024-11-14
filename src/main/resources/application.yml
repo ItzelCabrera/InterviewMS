@@ -2,7 +2,7 @@ spring:
   application:
     name: interview
   datasource:
-    url: jdbc:sqlserver://192.168.1.68:1433;databaseName=msvc_interview;encrypt=true;trustServerCertificate=true;
+    url: jdbc:sqlserver://192.168.1.65:1433;databaseName=msvc_interview;encrypt=true;trustServerCertificate=true;
     username: sa
     password: 2020640576
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver

@@ -1,24 +1,24 @@
 package com.pt.interviewms.dto;
 
 public class CvJoinQuestionsDTO {
-    private Long cvId;
+    private Long userId;
     private String questions;
 
     public CvJoinQuestionsDTO() {
 
     }
 
-    public CvJoinQuestionsDTO(Long cvId, String questions) {
-        this.cvId = cvId;
+    public CvJoinQuestionsDTO(Long userId, String questions) {
+        this.userId = userId;
         this.questions = questions;
     }
 
-    public Long getCvId() {
-        return cvId;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setCvId(Long cvId) {
-        this.cvId = cvId;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getQuestions() {

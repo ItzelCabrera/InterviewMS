@@ -8,6 +8,5 @@ import java.util.Optional;
 
 public interface InterviewRecordRepository extends CrudRepository<InterviewRecord, Long> {
     Optional<InterviewRecord> findByInterviewIdAndUserId(Long interviewId, Long userId);
-
     Optional<List<InterviewRecord>> findAllByUserId(Long userId);
 }
