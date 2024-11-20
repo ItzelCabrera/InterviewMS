@@ -45,6 +45,7 @@ public class InterviewServiceImpl implements InterviewService {
     //obtiene aleatoriamente de BD las preguntas y genera una entrevista
     @Override
     public InterviewJoinQuestionsDTO generaInterview(Long userId) {
+        logger.info("Inicia InterviewServiceImpl.generaInterview");
         InterviewRecord interviewRecord = new InterviewRecord(new Date(),userId);
         InterviewRecord interviewRecordDB =  interviewRecordRepository.save(interviewRecord);
         List<Question> questions = questionRepository.selectNullQuestionsByUserId_query(userId).

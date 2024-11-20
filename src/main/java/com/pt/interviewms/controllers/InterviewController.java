@@ -4,6 +4,8 @@ import com.pt.interviewms.dto.*;
 import com.pt.interviewms.dto.response.GenericResponseDTO;
 import com.pt.interviewms.models.commons.CommonController;
 import com.pt.interviewms.services.InterviewService;
+import com.pt.interviewms.services.InterviewServiceImpl;
+
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +23,7 @@ import java.util.List;
 public class InterviewController {
     private static Logger logger = LoggerFactory.getLogger(InterviewController.class);
     @Autowired
-    private InterviewService interviewService;
+    private InterviewServiceImpl interviewService;
 
     @PostMapping("/generateInterview/{userId}") //genera una entrevista con las preguntas en BD (las toma de forma aleatoria)
     public ResponseEntity<GenericResponseDTO<InterviewJoinQuestionsDTO>> generateInterview(@PathVariable Long userId){
