@@ -58,6 +58,9 @@ public class InterviewServiceImpl implements InterviewService {
         InterviewJoinQuestionsDTO ijqDTO = new InterviewJoinQuestionsDTO();
         ijqDTO.setInterviewId(interviewRecordDB.getInterviewId());
         ijqDTO.setQuestionDTOs(getQuestionsDTOS(questionsDB));
+        ijqDTO.getQuestionDTOs().forEach(questionDTO -> 
+        		logger.info("Pregunta: {}", questionDTO.getBodyQuestion())
+        		);
         return ijqDTO;
     }
 
