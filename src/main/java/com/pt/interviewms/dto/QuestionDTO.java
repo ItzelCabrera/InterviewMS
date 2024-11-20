@@ -1,6 +1,7 @@
 package com.pt.interviewms.dto;
 
-public class QuestionDTO {
+public class    QuestionDTO {
+    private Long questionId;
     private String bodyQuestion;
 
     public QuestionDTO() {
@@ -16,5 +17,13 @@ public class QuestionDTO {
 
     public void setBodyQuestion(String bodyQuestion) {
         this.bodyQuestion = bodyQuestion;
+    }
+
+    public Long getQuestionId() {
+        return questionId;
+    }
+
+    public void setQuestionId(Long questionId) {
+        this.questionId = questionId;
     }
 }

@@ -184,6 +184,7 @@ public class InterviewServiceImpl implements InterviewService {
         for(Question question:questions){
             QuestionDTO questionDTO = new QuestionDTO();
             questionDTO.setBodyQuestion(question.getBodyQuestion());
+            questionDTO.setQuestionId(question.getQuestionId());
             questionsDTOs.add(questionDTO);
         }
         return questionsDTOs;
