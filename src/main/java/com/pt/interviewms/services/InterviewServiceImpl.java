@@ -67,7 +67,7 @@ public class InterviewServiceImpl implements InterviewService {
     //filtra los overview de todas las entrevistas realizadas
     @Override
     public InterviewRecordsDTO filtrarOverviews(Long userId) {
-        logger.info(String.format("userId %l", userId));
+        logger.info(String.format("userId %d", userId));
         List<InterviewRecord> interviewRecords =interviewRecordRepository.findAllByUserId(userId).
                 orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         InterviewRecordsDTO interviewRecordsDTO = new InterviewRecordsDTO();
@@ -79,7 +79,7 @@ public class InterviewServiceImpl implements InterviewService {
             interviewRecordDTO.setScore((interviewRecord.getScore()==null)?-1L:interviewRecord.getScore());
             interviewRecordsDTO.getInterviewRecordDTOs().add(interviewRecordDTO);
         }
-        interviewRecordsDTO.getInterviewRecordDTOs().stream().forEach(ir -> logger.info(String.format("interviewId %l dateTime %s score %l", ir.getInterviewId(), ir.getDateTime().toString(), ir.getScore())));
+        interviewRecordsDTO.getInterviewRecordDTOs().stream().forEach(ir -> logger.info(String.format("interviewId %d dateTime %s score %d", ir.getInterviewId(), ir.getDateTime().toString(), ir.getScore())));
         return interviewRecordsDTO;
     }
 
