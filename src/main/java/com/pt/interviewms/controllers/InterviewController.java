@@ -33,11 +33,11 @@ public class InterviewController {
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.generaInterview(userId)));
         }catch(ResponseStatusException ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.toString(), ex.getMessage(), "service execute", null), HttpStatus.NOT_FOUND);
         }catch(Exception ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.toString(),ex.getMessage(), "service execute", null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -51,11 +51,11 @@ public class InterviewController {
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.filtrarOverviews(user_id)));
         }catch(ResponseStatusException ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.toString(), ex.getMessage(), "service execute", null), HttpStatus.NOT_FOUND);
         }catch(Exception ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.toString(), ex.getMessage(), "service execute", null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -69,11 +69,11 @@ public class InterviewController {
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.filtrarInterview(user_id,interview_id)));
         }catch(ResponseStatusException ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.toString(), ex.getMessage(), "service execute", null), HttpStatus.NOT_FOUND);
         }catch(Exception ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.toString(), ex.getMessage(), "service execute", null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -89,11 +89,11 @@ public class InterviewController {
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                    CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,null));
         }catch(ResponseStatusException ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.toString(), ex.getMessage(), "service execute", null), HttpStatus.NOT_FOUND);
         }catch(Exception ex){
-            logger.error("Exception: " + ex.getMessage());
+            logger.error("Exception: " , ex);
             return new ResponseEntity<>(new GenericResponseDTO<>(
                     CommonController.ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.toString(), ex.getMessage(), "service execute", null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
