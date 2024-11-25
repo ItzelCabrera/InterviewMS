@@ -156,13 +156,14 @@ public class InterviewServiceImpl implements InterviewService {
                         orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
                 answer.setScore(items_score.get(1).trim());
                 Answer answerDB = answerRepository.save(answer);
-                if(items_score.get(1).trim().equals("CORRECTO")) promedio++;
-                logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore());
+                if(items_score.get(1).trim().equals("CORRECTA")) promedio++;
+                logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore() + " promedio " + promedio);
             }
             InterviewRecord interviewRecord = interviewRecordRepository.findById(interviewJoinScoresDTO.getInterviewId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             interviewRecord.setScore((promedio * 100L) /2);
             InterviewRecord interviewRecordDB = interviewRecordRepository.save(interviewRecord);
+            logger.info(String.format("interviewScore %d", interviewRecord.getScore()));
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Error al parsear la publicacion de LLM-Service");
         }
