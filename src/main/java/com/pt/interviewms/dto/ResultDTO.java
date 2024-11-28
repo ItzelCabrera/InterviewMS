@@ -5,6 +5,8 @@ public class ResultDTO {
     private String answerUser;
     private String score;
 
+    private String answerLLM;
+
     public ResultDTO() {
     }
 
@@ -30,5 +32,13 @@ public class ResultDTO {
 
     public void setScore(String score) {
         this.score = score;
+    }
+
+    public String getAnswerLLM() {
+        return answerLLM;
+    }
+
+    public void setAnswerLLM(String answerLLM) {
+        this.answerLLM = answerLLM;
     }
 }
