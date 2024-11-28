@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.pt</groupId>
 	<artifactId>interviewms</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version> <!-- Cambia el número según corresponda -->
 	<name>interviewms</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
