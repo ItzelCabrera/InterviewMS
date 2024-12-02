@@ -197,7 +197,7 @@ public class InterviewServiceImpl implements InterviewService {
             Question questionStored = questionRepository.save(questionDB);
             resultDTO.setAnswerUser(questionStored.getAnswerUser());
             resultDTO.setScore(questionStored.getScore());
-            resultDTO.setScore(questionStored.getAnswerLLM());
+            resultDTO.setAnswerLLM(questionStored.getAnswerLLM());
             resultsDTOs.add(resultDTO);
         }
         resultsDTOs.stream().forEach(e -> logger.info("result " + e.getAnswerUser()));
