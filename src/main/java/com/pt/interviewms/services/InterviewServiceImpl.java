@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pt.interviewms.dto.*;
 import com.pt.interviewms.dto.InterviewRecordsDTO;
-import com.pt.interviewms.models.entity.Answer;
 import com.pt.interviewms.models.entity.InterviewRecord;
 import com.pt.interviewms.models.entity.Question;
-import com.pt.interviewms.repositories.AnswerRepository;
 import com.pt.interviewms.repositories.InterviewRecordRepository;
 import com.pt.interviewms.repositories.QuestionRepository;
 import org.slf4j.Logger;
@@ -33,9 +31,6 @@ public class InterviewServiceImpl implements InterviewService {
 
     @Autowired
     private QuestionRepository questionRepository;
-
-    @Autowired
-    private AnswerRepository answerRepository;
 
     @Autowired
     private KafkaTemplate<Integer, String> kafkaTemplate;
@@ -109,9 +104,10 @@ public class InterviewServiceImpl implements InterviewService {
             CvJoinQuestionsDTO cvJoinFieldDTO = mapper.readValue(llmResponse, CvJoinQuestionsDTO.class);
             List<String> elements = new ArrayList<>(Arrays.stream(cvJoinFieldDTO.getQuestions().split("\\|")).toList());
             for(String element: elements){
-                Question question = new Question(element.trim(), cvJoinFieldDTO.getUserId());
+                List<String> pair = new ArrayList<>(Arrays.stream(element.split("~")).toList());
+                Question question = new Question(pair.get(0).trim(),pair.get(1).trim(), cvJoinFieldDTO.getUserId());
                 Question questionDB = questionRepository.save(question);
-                logger.info("bodyQuestion "+questionDB.getBodyQuestion() + "    userId " + questionDB.getUserId());
+                logger.info("bodyQuestion "+questionDB.getBodyQuestion() + " answerLLM " + questionDB.getAnswerLLM()+" userId " + questionDB.getUserId());
             }
             logger.info("public void setUserQuestions finished");
         } catch (JsonProcessingException e) {
@@ -123,11 +119,9 @@ public class InterviewServiceImpl implements InterviewService {
     @Override
     public void setUserAnswers(QuestionJoinAnswerInputsDTO questionJoinAnswerInputsDTO) {
         for(QuestionJoinAnswerInputDTO qJaI:questionJoinAnswerInputsDTO.getqJaIsDTOs()){
-            Answer answer = new Answer(qJaI.getAnswerUser());
-            Answer answerDB = answerRepository.save(answer);
             Question question = questionRepository.findByQuestionId(qJaI.getQuestionId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-            question.setAnswerId(answerDB.getAnswerId());
+            question.setAnswerUser(qJaI.getAnswerUser());
             Question questionDB = questionRepository.save(question);
         }
         try {
@@ -150,14 +144,12 @@ public class InterviewServiceImpl implements InterviewService {
             int promedio = 0;
             for(String element: elements){
                 List<String> items_score = new ArrayList<>(Arrays.stream(element.split(" ")).toList());
-                Long answerId = questionRepository.selectAnswerIdByQuestionId(Long.valueOf(items_score.get(0).trim())).
+                Question question = questionRepository.findByQuestionId(Long.valueOf(items_score.get(0).trim())).
                         orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-                Answer answer = answerRepository.findByAnswerId(answerId).
-                        orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-                answer.setScore(items_score.get(1).trim());
-                Answer answerDB = answerRepository.save(answer);
+                question.setScore(items_score.get(1).trim());
+                Question questionDB = questionRepository.save(question);
                 if(items_score.get(1).trim().equals("CORRECTA")) promedio++;
-                logger.info("answerUser " + answerDB.getAnswerUser() + "    score " + answerDB.getScore() + " promedio " + promedio);
+                logger.info("answerUser " + questionDB.getAnswerUser() + "    score " + questionDB.getScore() + " promedio " + promedio);
             }
             InterviewRecord interviewRecord = interviewRecordRepository.findById(interviewJoinScoresDTO.getInterviewId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -198,11 +190,13 @@ public class InterviewServiceImpl implements InterviewService {
             ResultDTO resultDTO = new ResultDTO();
             //setea el bodyQuestion
             resultDTO.setBodyQuestion(question.getBodyQuestion());
-            //setea la información de la respuesta (answerUser, score)
-            Answer answer = answerRepository.findByAnswerId(question.getAnswerId()).
+            //setea la información de la respuesta (answerUser, score, answerLLM)
+            Question questionDB = questionRepository.findByQuestionId(question.getQuestionId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-            resultDTO.setAnswerUser(answer.getAnswerUser());
-            resultDTO.setScore(answer.getScore());
+            Question questionStored = questionRepository.save(questionDB);
+            resultDTO.setAnswerUser(questionStored.getAnswerUser());
+            resultDTO.setScore(questionStored.getScore());
+            resultDTO.setScore(questionStored.getAnswerLLM());
             resultsDTOs.add(resultDTO);
         }
         resultsDTOs.stream().forEach(e -> logger.info("result " + e.getAnswerUser()));

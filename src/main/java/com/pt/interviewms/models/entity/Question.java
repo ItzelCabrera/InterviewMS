@@ -20,19 +20,26 @@ public class Question {
     @Column(name="interviewId")
     private Long interviewId;
 
-    @Column(name="answerId")
-    private Long answerId;
-
     @Column(name="userId")
     private Long userId;
+
+    @Column(name="answerUser")
+    private String answerUser;
+
+    @Column(name="answerLLM")
+    private String answerLLM;
+
+    @Column(name="score")
+    private String score;
 
     private static Logger logger = LoggerFactory.getLogger(Question.class);
 
     public Question() {
     }
 
-    public Question(String bodyQuestion, Long userId) {
+    public Question(String bodyQuestion, String answerLLM, Long userId) {
         this.bodyQuestion = bodyQuestion;
+        this.answerLLM = answerLLM;
         this.userId = userId;
     }
 
@@ -60,19 +67,35 @@ public class Question {
         this.interviewId = interviewId;
     }
 
-    public Long getAnswerId() {
-        return answerId;
-    }
-
-    public void setAnswerId(Long answerId) {
-        this.answerId = answerId;
-    }
-
     public Long getUserId() {
         return userId;
     }
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getAnswerUser() {
+        return answerUser;
+    }
+
+    public void setAnswerUser(String answerUser) {
+        this.answerUser = answerUser;
+    }
+
+    public String getAnswerLLM() {
+        return answerLLM;
+    }
+
+    public void setAnswerLLM(String answerLLM) {
+        this.answerLLM = answerLLM;
+    }
+
+    public String getScore() {
+        return score;
+    }
+
+    public void setScore(String score) {
+        this.score = score;
     }
 }
