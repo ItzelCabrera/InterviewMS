@@ -15,9 +15,6 @@ public interface QuestionRepository extends CrudRepository<Question, Long> {
 
     Optional<Question> findByQuestionId(Long questionId);
 
-    @Query("SELECT q.answerId FROM Question q WHERE q.questionId = ?1")
-    Optional<Long> selectAnswerIdByQuestionId(Long questionId);
-
     @Query(value="SELECT TOP 2 * FROM Question q WHERE q.interview_id IS NULL AND q.user_id = ?1 ORDER BY NEWID()", nativeQuery=true)
     Optional<List<Question>> selectNullQuestionsByUserId_query(Long userId);
 }
