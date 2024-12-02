@@ -5,6 +5,7 @@ package com.pt.interviewms.dto;
         private String bodyQuestion;
 
         private String answerUser;
+        private String answerLLM;
 
     public Long getQuestionId() {
         return questionId;
@@ -29,4 +30,12 @@ package com.pt.interviewms.dto;
     public void setAnswerUser(String answerUser) {
         this.answerUser = answerUser;
     }
-}
+
+        public String getAnswerLLM() {
+            return answerLLM;
+        }
+
+        public void setAnswerLLM(String answerLLM) {
+            this.answerLLM = answerLLM;
+        }
+    }

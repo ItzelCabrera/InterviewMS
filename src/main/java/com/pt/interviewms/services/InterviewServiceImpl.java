@@ -122,6 +122,7 @@ public class InterviewServiceImpl implements InterviewService {
             Question question = questionRepository.findByQuestionId(qJaI.getQuestionId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             question.setAnswerUser(qJaI.getAnswerUser());
+            qJaI.setAnswerLLM(question.getAnswerLLM());
             Question questionDB = questionRepository.save(question);
         }
         try {
