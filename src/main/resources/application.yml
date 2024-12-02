@@ -9,8 +9,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-      show_sql: true
-      
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+          use_sql_comments: true
+  logging:
+    level:
+      root: INFO
+      org.hibernate.SQL: DEBUG
+      org.hibernate.type.descriptor.sql: TRACE
 server:
   port: 8084
 eureka:
