@@ -14,7 +14,7 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long questionId;
 
-    @NotNull
+    @Column(name = "bodyQuestion", nullable = false, unique = true)
     private String bodyQuestion;
 
     @Column(name="interviewId")
