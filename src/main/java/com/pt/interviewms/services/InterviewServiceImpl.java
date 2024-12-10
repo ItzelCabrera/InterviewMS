@@ -154,7 +154,7 @@ public class InterviewServiceImpl implements InterviewService {
             }
             InterviewRecord interviewRecord = interviewRecordRepository.findById(interviewJoinScoresDTO.getInterviewId()).
                     orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-            interviewRecord.setScore((promedio * 100L) /2);
+            interviewRecord.setScore((promedio * 100L) /10);
             InterviewRecord interviewRecordDB = interviewRecordRepository.save(interviewRecord);
             logger.info(String.format("interviewScore %d", interviewRecord.getScore()));
         } catch (JsonProcessingException e) {
