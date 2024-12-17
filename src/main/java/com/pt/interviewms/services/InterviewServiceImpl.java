@@ -110,13 +110,11 @@ public class InterviewServiceImpl implements InterviewService {
             logger.info(String.format("[%s] Mapper of CvJoinQuestionsDTO %s", this.getClass().getSimpleName(), cvJoinFieldDTO.toString()));
             
             List<String> elements = new ArrayList<>(Arrays.stream(cvJoinFieldDTO.getQuestions().split("\\|")).toList());
-            
+            logger.info(String.format("[%s] Start update questions", this.getClass().getSimpleName()));
+            questionRepository.updateInterviewIdByUserId(cvJoinFieldDTO.getUserId());
+            logger.info(String.format("[%s] Completed update questions", this.getClass().getSimpleName()));
             for (String element : elements) {
-                try {
-                    logger.info(String.format("[%s] Start update questions", this.getClass().getSimpleName()));
-                    questionRepository.updateInterviewIdByUserId(cvJoinFieldDTO.getUserId());
-                    logger.info(String.format("[%s] Completed update questions", this.getClass().getSimpleName()));
-                    
+                try {                   
                     List<String> pair = new ArrayList<>(Arrays.stream(element.split("~")).toList());
                     Question question = new Question(pair.get(0).trim(), pair.get(1).trim(), cvJoinFieldDTO.getUserId());
                     
