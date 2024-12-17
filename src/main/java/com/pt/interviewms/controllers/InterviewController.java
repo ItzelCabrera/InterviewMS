@@ -28,8 +28,7 @@ public class InterviewController {
     @PostMapping("/generateInterview/{userId}") //genera una entrevista con las preguntas en BD (las toma de forma aleatoria)
     public ResponseEntity<GenericResponseDTO<InterviewJoinQuestionsDTO>> generateInterview(@PathVariable Long userId){
         try{
-            logger.info("Execute generateInterview() " );
-            logger.info(String.format("userId %d", userId));
+        	logger.info(String.format("[%s] Generating interview userId : [%d]", this.getClass().getSimpleName(),userId));
             return ResponseEntity.ok().body(new GenericResponseDTO<>(
                     CommonController.SUCCESS, HttpStatus.OK.value(), null, null, null,interviewService.generaInterview(userId)));
         }catch(ResponseStatusException ex){

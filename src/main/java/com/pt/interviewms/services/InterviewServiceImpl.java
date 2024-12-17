@@ -40,12 +40,13 @@ public class InterviewServiceImpl implements InterviewService {
     //obtiene aleatoriamente de BD las preguntas y genera una entrevista
     @Override
     public InterviewJoinQuestionsDTO generaInterview(Long userId) {
-        logger.info("Inicia InterviewServiceImpl.generaInterview");
+    	logger.info(String.format("[%s] Start method from service for userId [%d]", this.getClass().getSimpleName(),userId));
         InterviewRecord interviewRecord = new InterviewRecord(new Date(),userId);
         InterviewRecord interviewRecordDB =  interviewRecordRepository.save(interviewRecord);
         List<Question> questions = questionRepository.selectNullQuestionsByUserId_query(userId).
                 orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         List<Question> questionsDB = new ArrayList<>();
+        logger.info(String.format("[%s] questions.size: [%d]", questions.size()));
         for(Question question:questions){
             question.setInterviewId(interviewRecordDB.getInterviewId());
             questionsDB.add(questionRepository.save(question));
@@ -53,16 +54,17 @@ public class InterviewServiceImpl implements InterviewService {
         InterviewJoinQuestionsDTO ijqDTO = new InterviewJoinQuestionsDTO();
         ijqDTO.setInterviewId(interviewRecordDB.getInterviewId());
         ijqDTO.setQuestionDTOs(getQuestionsDTOS(questionsDB));
-        ijqDTO.getQuestionDTOs().forEach(questionDTO -> 
-        		logger.info("Pregunta: {}", questionDTO.getBodyQuestion())
+        ijqDTO.getQuestionDTOs().forEach(questionDTO ->
+        		logger.info(String.format("[%s] Pregunta: {}", this.getClass().getSimpleName(),questionDTO.getBodyQuestion()))
         		);
+        logger.info(String.format("[%s] Completed method from service for userId [%d]", this.getClass().getSimpleName(),userId));
         return ijqDTO;
     }
 
     //filtra los overview de todas las entrevistas realizadas
     @Override
     public InterviewRecordsDTO filtrarOverviews(Long userId) {
-        logger.info(String.format("userId %d", userId));
+    	logger.info(String.format("[%s] Start method from service for userId [%d]", this.getClass().getSimpleName(),userId));
         List<InterviewRecord> interviewRecords =interviewRecordRepository.findAllByUserId(userId).
                 orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         InterviewRecordsDTO interviewRecordsDTO = new InterviewRecordsDTO();
@@ -98,21 +100,34 @@ public class InterviewServiceImpl implements InterviewService {
     //setea las preguntas generadas a un determinada usuario
     @KafkaListener(topics = "questionsPublishJSON", groupId = "interviewMS")
     @Override
-    public void setUserQuestions(String llmResponse) {
-        logger.info(llmResponse);
+	public void setUserQuestions(String llmResponse) {
         try {
+        	logger.info(String.format("[%s] Start method listener topic questionsPublishJSON ", this.getClass().getSimpleName()));
+        	logger.info(String.format("[%s] Message received {}", this.getClass().getSimpleName(), llmResponse));
             CvJoinQuestionsDTO cvJoinFieldDTO = mapper.readValue(llmResponse, CvJoinQuestionsDTO.class);
+            logger.info(String.format("[%s] Mapper of CvJoinQuestionsDTO %s", this.getClass().getSimpleName(), cvJoinFieldDTO.toString()));
             List<String> elements = new ArrayList<>(Arrays.stream(cvJoinFieldDTO.getQuestions().split("\\|")).toList());
             for(String element: elements){
+            	logger.info(String.format("[%s] Start update questions", this.getClass().getSimpleName()));
+            	questionRepository.updateInterviewIdByUserId(cvJoinFieldDTO.getUserId());
+            	logger.info(String.format("[%s] Completed update questions", this.getClass().getSimpleName()));
                 List<String> pair = new ArrayList<>(Arrays.stream(element.split("~")).toList());
                 Question question = new Question(pair.get(0).trim(),pair.get(1).trim(), cvJoinFieldDTO.getUserId());
                 Question questionDB = questionRepository.save(question);
-                logger.info("bodyQuestion "+questionDB.getBodyQuestion() + " answerLLM " + questionDB.getAnswerLLM()+" userId " + questionDB.getUserId());
+                logger.info(String.format("[%s] BodyQuestion : [%s]", this.getClass().getSimpleName(), questionDB.getBodyQuestion()));
+                logger.info(String.format("[%s] AnswerLLM : [%s]", this.getClass().getSimpleName(),questionDB.getAnswerLLM()));
+                logger.info(String.format("[%s] UserId : [%d]", this.getClass().getSimpleName(), questionDB.getUserId()));
             }
-            logger.info("public void setUserQuestions finished");
+            logger.info(String.format("[%s] Completed method", this.getClass().getSimpleName()));
         } catch (JsonProcessingException e) {
+        	logger.error(String.format("[%s] An errror JsonProcessingException ",this.getClass().getSimpleName()));
+        	logger.error("JsonProcessingException: ", e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Error al parsear la publicacion de LLM-Service");
-        }
+        }catch (Exception e) {
+        	logger.error(String.format("[%s] An errror Exception ",this.getClass().getSimpleName()));
+        	logger.error("Exception: ", e);
+        	throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,e.getMessage());
+		}
     }
 
     //setea las preguntas que el usuario proporciona

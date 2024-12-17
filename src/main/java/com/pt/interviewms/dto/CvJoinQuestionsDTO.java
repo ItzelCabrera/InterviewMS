@@ -28,4 +28,14 @@ public class CvJoinQuestionsDTO {
     public void setQuestions(String questions) {
         this.questions = questions;
     }
+
+	@Override
+	public String toString() {
+		return "{" + "\n"
+				+ "userId: " + userId + ", " + "\n"
+				+ "questions: " + questions + "," + "\n" 
+				+ "}";
+	}
+    
+    
 }
