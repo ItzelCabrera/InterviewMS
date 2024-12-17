@@ -11,6 +11,7 @@ import com.pt.interviewms.repositories.QuestionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -100,35 +101,53 @@ public class InterviewServiceImpl implements InterviewService {
     //setea las preguntas generadas a un determinada usuario
     @KafkaListener(topics = "questionsPublishJSON", groupId = "interviewMS")
     @Override
-	public void setUserQuestions(String llmResponse) {
+    public void setUserQuestions(String llmResponse) {
         try {
-        	logger.info(String.format("[%s] Start method listener topic questionsPublishJSON ", this.getClass().getSimpleName()));
-        	logger.info(String.format("[%s] Message received {}", this.getClass().getSimpleName(), llmResponse));
+            logger.info(String.format("[%s] Start method listener topic questionsPublishJSON", this.getClass().getSimpleName()));
+            logger.info(String.format("[%s] Message received {}", this.getClass().getSimpleName(), llmResponse));
+            
             CvJoinQuestionsDTO cvJoinFieldDTO = mapper.readValue(llmResponse, CvJoinQuestionsDTO.class);
             logger.info(String.format("[%s] Mapper of CvJoinQuestionsDTO %s", this.getClass().getSimpleName(), cvJoinFieldDTO.toString()));
+            
             List<String> elements = new ArrayList<>(Arrays.stream(cvJoinFieldDTO.getQuestions().split("\\|")).toList());
-            for(String element: elements){
-            	logger.info(String.format("[%s] Start update questions", this.getClass().getSimpleName()));
-            	questionRepository.updateInterviewIdByUserId(cvJoinFieldDTO.getUserId());
-            	logger.info(String.format("[%s] Completed update questions", this.getClass().getSimpleName()));
-                List<String> pair = new ArrayList<>(Arrays.stream(element.split("~")).toList());
-                Question question = new Question(pair.get(0).trim(),pair.get(1).trim(), cvJoinFieldDTO.getUserId());
-                Question questionDB = questionRepository.save(question);
-                logger.info(String.format("[%s] BodyQuestion : [%s]", this.getClass().getSimpleName(), questionDB.getBodyQuestion()));
-                logger.info(String.format("[%s] AnswerLLM : [%s]", this.getClass().getSimpleName(),questionDB.getAnswerLLM()));
-                logger.info(String.format("[%s] UserId : [%d]", this.getClass().getSimpleName(), questionDB.getUserId()));
+            
+            for (String element : elements) {
+                try {
+                    logger.info(String.format("[%s] Start update questions", this.getClass().getSimpleName()));
+                    questionRepository.updateInterviewIdByUserId(cvJoinFieldDTO.getUserId());
+                    logger.info(String.format("[%s] Completed update questions", this.getClass().getSimpleName()));
+                    
+                    List<String> pair = new ArrayList<>(Arrays.stream(element.split("~")).toList());
+                    Question question = new Question(pair.get(0).trim(), pair.get(1).trim(), cvJoinFieldDTO.getUserId());
+                    
+                    // Intenta guardar la pregunta
+                    Question questionDB = questionRepository.save(question);
+                    
+                    logger.info(String.format("[%s] BodyQuestion : [%s]", this.getClass().getSimpleName(), questionDB.getBodyQuestion()));
+                    logger.info(String.format("[%s] AnswerLLM : [%s]", this.getClass().getSimpleName(), questionDB.getAnswerLLM()));
+                    logger.info(String.format("[%s] UserId : [%d]", this.getClass().getSimpleName(), questionDB.getUserId()));
+                } catch (DataIntegrityViolationException e) {
+                    // Loguea la excepción pero continúa con los demás registros
+                    logger.warn(String.format("[%s] Duplicate key found for question [%s]. Skipping insertion.", 
+                        this.getClass().getSimpleName(), element));
+                } catch (Exception e) {
+                    logger.error(String.format("[%s] An error occurred while processing question [%s]", 
+                        this.getClass().getSimpleName(), element));
+                    logger.error("Exception: ", e);
+                }
             }
             logger.info(String.format("[%s] Completed method", this.getClass().getSimpleName()));
         } catch (JsonProcessingException e) {
-        	logger.error(String.format("[%s] An errror JsonProcessingException ",this.getClass().getSimpleName()));
-        	logger.error("JsonProcessingException: ", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Error al parsear la publicacion de LLM-Service");
-        }catch (Exception e) {
-        	logger.error(String.format("[%s] An errror Exception ",this.getClass().getSimpleName()));
-        	logger.error("Exception: ", e);
-        	throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,e.getMessage());
-		}
+            logger.error(String.format("[%s] An error JsonProcessingException ", this.getClass().getSimpleName()));
+            logger.error("JsonProcessingException: ", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al parsear la publicación de LLM-Service");
+        } catch (Exception e) {
+            logger.error(String.format("[%s] An error Exception ", this.getClass().getSimpleName()));
+            logger.error("Exception: ", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
+
 
     //setea las preguntas que el usuario proporciona
     @Override
