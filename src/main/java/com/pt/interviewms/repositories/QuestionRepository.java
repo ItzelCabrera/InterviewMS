@@ -22,7 +22,7 @@ public interface QuestionRepository extends CrudRepository<Question, Long> {
     
     @Transactional
     @Modifying
-    @Query(value = "UPDATE question SET interview_id = 10000 WHERE user_id = ?1", nativeQuery = true)
+    @Query(value = "UPDATE question SET user_id = 10000 WHERE user_id = ?1", nativeQuery = true)
     void updateInterviewIdByUserId(Long userId);    
     
 }
