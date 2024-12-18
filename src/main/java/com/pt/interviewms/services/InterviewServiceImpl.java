@@ -47,7 +47,6 @@ public class InterviewServiceImpl implements InterviewService {
         List<Question> questions = questionRepository.selectNullQuestionsByUserId_query(userId).
                 orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         List<Question> questionsDB = new ArrayList<>();
-        logger.info(String.format("[%s] questions.size: [%d]", questions.size()));
         for(Question question:questions){
             question.setInterviewId(interviewRecordDB.getInterviewId());
             questionsDB.add(questionRepository.save(question));
